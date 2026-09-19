@@ -395,12 +395,12 @@ nav {
   height: 104px;
   margin: 0 auto 1rem;
   border-radius: 50%;
-  object-fit: cover;
-  /* 여권 사진은 얼굴이 위쪽에 있어 살짝 위를 기준으로 잘라낸다 */
-  object-position: center 20%;
-  border: 3px solid var(--color-bg);
+  /* 원본 사진의 세로 비율을 유지한 채 원 안에 최대로 넣고(contain),
+     원을 벗어나는 모서리만 border-radius가 잘라낸다. */
+  object-fit: contain;
+  padding: 3px;
+  background-color: #fff;
   box-shadow: 0 0 0 2px var(--color-primary);
-  background-color: var(--color-bg-alt);
 }
 
 .profile-card__name {
