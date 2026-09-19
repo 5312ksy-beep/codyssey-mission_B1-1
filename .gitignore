@@ -1,0 +1,9 @@
+# 에디터 / 도구 설정
+.claude/
+.vscode/
+.idea/
+
+# OS 생성 파일
+Thumbs.db
+desktop.ini
+.DS_Store

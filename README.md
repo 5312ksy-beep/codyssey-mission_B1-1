@@ -19,28 +19,28 @@ https://5312ksy-beep.github.io/codyssey-mission_B1-1/
 
 ## 주요 기능
 
-- **반응형 레이아웃** — 모바일 / 태블릿(768px) / 데스크톱(1024px) 3단계 브레이크포인트
+- **반응형 레이아웃** — 모바일 기본 + 768px / 960px 브레이크포인트
 - **다크모드** — `localStorage`에 저장되어 새로고침 후에도 유지, FOUC 방지 처리 포함
 - **햄버거 메뉴** — 모바일에서 드롭다운 토글, 메뉴 선택 시 자동 닫힘
 - **부드러운 스크롤** — 네비게이션 클릭 시 해당 섹션으로 이동
 - **스크롤 애니메이션** — Intersection Observer(`threshold: 0.2`)로 섹션 fade-in
-- **네비게이션 상태 변화** — 스크롤 60px 이상에서 그림자 표시
+- **네비게이션 상태 변화** — 스크롤 60px 이상에서 테두리·그림자 표시
 - **스크롤 탑 버튼** — 스크롤 300px 이상에서 노출
 - **GitHub API 연동** — 로딩 / 성공 / 에러 / 빈 상태 4가지 UI 처리, 재시도 버튼 제공
 - **폼 유효성 검사** — 실시간 검증 + 제출 시 전체 검증, 에러 메시지 인라인 표시
-- **접근성** — `aria-label`, `aria-expanded`, `aria-live`, 본문 바로가기 링크, `prefers-reduced-motion` 대응
+- **접근성** — `aria-label`, `aria-expanded`, `aria-live`, `aria-invalid`, 본문 바로가기 링크, `prefers-reduced-motion` 대응
 
 ## 파일 구조
 
 ```
 codyssey-mission_B1-1/
-├── index.html          # 시맨틱 마크업
+├── index.html          # 구조 — 시맨틱 마크업
 ├── css/
-│   └── style.css       # 변수 + 레이아웃 + 반응형 + 시각 효과
+│   └── style.css       # 표현 — 디자인 토큰 + 레이아웃 + 반응형 + 효과
 ├── js/
-│   └── main.js         # 인터랙션 + 다크모드 + 폼 + GitHub API
+│   └── main.js         # 동작 — STATE + 렌더 함수 + 이벤트 바인딩
 ├── images/
-│   └── profile.jpg     # 프로필 이미지
+│   └── profile.jpg     # 프로필 사진
 └── README.md
 ```
 
@@ -53,7 +53,6 @@ codyssey-mission_B1-1/
 1. VS Code에서 이 폴더를 엽니다
 2. 확장(`Ctrl+Shift+X`)에서 "Live Server" 설치
 3. `index.html` 우클릭 → **Open with Live Server**
-4. 브라우저에서 `http://127.0.0.1:5500` 자동 실행
 
 **방법 2 — Python 내장 서버**
 
@@ -65,419 +64,411 @@ python -m http.server 5500
 
 ---
 
-# 단계별 구현 가이드
+# 코드 아키텍처
 
-아래는 이 프로젝트를 처음부터 만드는 순서입니다. 명령어는 **Windows PowerShell 기준**입니다.
+`js/main.js`는 5개 블록으로 나뉘어 있고, 데이터는 **한 방향으로만** 흐릅니다.
 
-## 1단계 — 환경 세팅
-
-### 폴더와 파일 생성
-
-PowerShell은 bash의 중괄호 확장(`{css,js,images}`)과 `touch` 명령을 지원하지 않습니다.
-아래 명령을 사용합니다.
-
-```powershell
-New-Item -ItemType Directory -Force -Path css, js, images
-New-Item -ItemType File -Force -Path index.html, css\style.css, js\main.js
+```
+[1] STATE          화면에 영향을 주는 모든 값을 담은 객체 하나
+[2] elements       DOM 참조 모음
+[3] render*()      STATE를 "읽어서" 화면을 그림  (STATE를 바꾸지 않음)
+[4] setXxx()       STATE를 "바꾸고" render를 호출
+[5] 이벤트 바인딩   addEventListener로 [4]를 연결
 ```
 
-> **참고:** macOS / Linux에서는 다음과 같습니다.
-> ```bash
-> mkdir -p {css,js,images}
-> touch index.html css/style.css js/main.js
-> ```
-
-### 연결 확인
-
-먼저 아래 내용만 넣고 CSS와 JS가 제대로 연결되는지 확인합니다.
-
-```html
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>포트폴리오</title>
-  <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-  <h1>연결 테스트</h1>
-  <script src="js/main.js" defer></script>
-</body>
-</html>
+```
+사용자 이벤트  →  setXxx()가 STATE 변경  →  render()가 화면 반영
+     ↑                                              │
+     └──────────────  단방향, 역류 없음  ────────────┘
 ```
 
-- `css/style.css` → `h1 { color: red; }`
-- `js/main.js` → `console.log('JS 연결됨');`
+### STATE 객체
 
-빨간 글씨가 보이고 개발자도구(`F12`) 콘솔에 로그가 찍히면 세팅 완료입니다.
-
-> `defer` 속성은 HTML 파싱이 끝난 뒤 스크립트를 실행하게 합니다.
-> 이것 덕분에 `main.js` 상단에서 바로 `querySelector`를 써도 요소를 찾을 수 있습니다.
-
-## 2단계 — HTML 뼈대 (시맨틱 마크업)
-
-`<body>` 안을 6개 영역으로 구성합니다. 이 단계에서는 내용보다 **구조**에 집중합니다.
-
-```html
-<header id="header">
-  <nav>
-    <a href="#hero" class="logo">강서연</a>
-    <ul class="nav-links" id="nav-links">
-      <li><a href="#about">About</a></li>
-      <li><a href="#skills">Skills</a></li>
-      <li><a href="#projects">Projects</a></li>
-      <li><a href="#contact">Contact</a></li>
-    </ul>
-    <div class="nav-actions">
-      <button class="theme-toggle" type="button" aria-label="다크모드 전환">🌙</button>
-      <button class="hamburger" type="button" aria-label="메뉴 열기"
-              aria-expanded="false" aria-controls="nav-links">
-        <span></span><span></span><span></span>
-      </button>
-    </div>
-  </nav>
-</header>
-
-<main>
-  <section id="hero">...</section>
-  <section id="about" class="fade-in">...</section>
-  <section id="skills" class="fade-in">...</section>
-  <section id="projects" class="fade-in">
-    <div id="projects-container" aria-live="polite"><!-- JS가 채움 --></div>
-  </section>
-  <section id="contact" class="fade-in">
-    <form id="contact-form" novalidate>...</form>
-  </section>
-</main>
-
-<footer>...</footer>
-<button class="scroll-top" type="button" aria-label="맨 위로">↑</button>
-<script src="js/main.js" defer></script>
+```js
+const STATE = {
+  theme: 'light',
+  isMenuOpen: false,
+  isHeaderScrolled: false,
+  isScrollTopVisible: false,
+  projects: {
+    status: 'loading',   // 'loading' | 'success' | 'empty' | 'error'
+    items: [],
+    errorMessage: '',
+  },
+  formErrors: { name: '', email: '', message: '' },
+  isFormSubmitted: false,
+};
 ```
 
-### 이 단계 체크리스트
+설정값은 `CONFIG`로 따로 분리해, 매직 넘버가 코드 중간에 흩어지지 않게 했습니다.
 
-| 요구사항 | 확인 |
+```js
+const CONFIG = {
+  githubUsername: '5312ksy-beep',
+  repoCount: 6,
+  headerScrollThreshold: 60,
+  scrollTopThreshold: 300,
+  fadeInThreshold: 0.2,
+  successMessageDuration: 3000,
+};
+```
+
+---
+
+# 평가 항목 대응
+
+## 항목 1 — 기능 동작
+
+| 확인 항목 | 구현 위치 | 확인 방법 |
+| --- | --- | --- |
+| 창 크기를 줄이면 모바일 레이아웃으로 바뀌는가 | `style.css` 반응형 블록 | `Ctrl+Shift+M` → 375px / 768px / 1200px |
+| 테마 토글 동작 + 새로고침 후 유지 | `setTheme()`, `renderTheme()` | 토글 클릭 → `F5` → 유지 확인 |
+| 햄버거 / 스크롤 애니메이션 / 맨 위로 버튼 | `setMenuOpen()`, `fadeObserver`, `updateScrollState()` | 375px에서 햄버거, 스크롤 300px 이상 |
+| GitHub API 로딩·에러·빈 상태 구분 | `loadProjects()`, `renderProjects()` | 아래 "에러 상태 테스트" 참고 |
+| 필수값 누락·이메일 형식 오류 즉시 피드백 | `validateField()`, `renderFormErrors()` | 입력창에 타이핑하면서 확인 |
+
+### 에러 상태 테스트 방법
+
+`js/main.js`의 `CONFIG.githubUsername`을 바꿔 확인합니다.
+
+| 값 | 결과 |
 | --- | --- |
-| 시맨틱 태그 `<header> <nav> <main> <section> <footer>` 사용 | ✅ |
-| 6개 영역: Hero, About, Skills, Projects, Contact, Footer | ✅ |
-| 앵커 링크(`href="#about"`)로 섹션 이동 | ✅ |
-| 모든 이미지에 `alt` 속성 | ✅ |
-| `<label for="name">` ↔ `<input id="name">` 매칭 | ✅ |
-| `novalidate` — 브라우저 기본 검증을 끄고 JS로 직접 처리 | ✅ |
+| `'5312ksy-beep'` | 정상 — 카드 목록 |
+| `'asdfasdf12345678'` | 404 → 에러 UI + 재시도 버튼 |
+| 저장소가 없는 계정 | 빈 상태 UI |
+| 새로고침 60회 이상 반복 | 403 → 호출 한도 초과 메시지 |
 
-> **버튼에는 `type="button"`을 명시합니다.** `<form>` 안이 아니더라도 습관을 들여두면,
-> 폼 내부에 버튼을 넣었을 때 기본값 `type="submit"` 때문에 의도치 않게 폼이 제출되는 문제를 막을 수 있습니다.
+## 항목 2 — 구조와 선택의 근거
 
-## 3단계 — CSS 변수 & 기본 스타일
+### Q. HTML / CSS / JS를 파일로 분리한 이유와 각 파일의 역할은?
 
-색상을 CSS 변수로 정의해두면 다크모드를 **변수 재정의만으로** 구현할 수 있습니다.
+**관심사의 분리(Separation of Concerns)** 때문입니다. 셋은 답하는 질문이 다릅니다.
+
+| 파일 | 답하는 질문 | 역할 |
+| --- | --- | --- |
+| `index.html` | **무엇이** 있는가 | 문서의 구조와 의미. 콘텐츠와 그 관계를 정의 |
+| `css/style.css` | **어떻게 보이는가** | 색·간격·배치·전환 등 표현 |
+| `js/main.js` | **어떻게 반응하는가** | 상태 관리와 사용자 상호작용 |
+
+분리하면 얻는 것:
+
+1. **수정 범위가 좁아집니다.** 색을 바꾸려면 CSS만 열면 되고, HTML·JS는 건드릴 필요가 없습니다.
+2. **브라우저가 캐시할 수 있습니다.** HTML만 바뀌어도 CSS·JS는 캐시된 걸 재사용합니다.
+3. **협업이 가능해집니다.** 디자이너는 CSS, 개발자는 JS를 동시에 작업해도 충돌이 적습니다.
+4. **재사용됩니다.** 페이지가 늘어나도 같은 `style.css` 하나를 공유합니다.
+
+### Q. 시맨틱 태그를 어떤 기준으로 선택했는가?
+
+기준은 **"화면에서 어떻게 보이는가"가 아니라 "이 영역이 문서에서 무슨 역할인가"** 입니다.
+
+| 태그 | 사용 위치 | 선택 이유 |
+| --- | --- | --- |
+| `<header>` | 상단 고정 바 | 페이지 전체의 머리말 영역이라서 |
+| `<nav>` | 메뉴 링크 묶음 | 주요 탐색 링크 모음이라서. 스크린리더가 "탐색으로 건너뛰기"를 제공 |
+| `<main>` | 본문 전체 | 페이지의 핵심 콘텐츠. 문서당 하나만 존재해야 함 |
+| `<section>` | Hero / About / Skills / Projects / Contact | 각각 제목(`h1`/`h2`)을 가진 독립 주제 단위라서 |
+| `<article>` | 프로젝트 카드 | 카드 하나만 떼어내도 의미가 성립하는 독립 콘텐츠라서 |
+| `<figure>` / `<figcaption>` | 프로필 카드 | 이미지와 그 설명이 한 덩어리라서 |
+| `<footer>` | 하단 | 저작권·연락처 등 꼬리말 정보라서 |
+| `<form>` / `<label>` | Contact | 입력 양식과 각 입력의 이름표 |
+
+`<div>`를 쓴 곳은 **의미 없이 스타일을 위해 묶기만 하는 경우**(`.hero-inner`, `.form-group`)로 한정했습니다.
+
+**얻는 것**: 스크린리더 사용자가 랜드마크 단위로 이동할 수 있고, 검색엔진이 문서 구조를 이해하며, CSS 클래스 이름 없이도 코드를 읽을 수 있습니다.
+
+### Q. CSS 변수(`:root`)로 관리하면 무엇이 좋은가?
 
 ```css
 :root {
-  --color-bg: #ffffff;
-  --color-text: #1a1a1a;
   --color-primary: #2563eb;
-  --color-card-bg: #f8fafc;
-  --color-border: #e2e8f0;
-  --color-error: #dc2626;
-  --color-success: #16a34a;
-
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 2rem;
-  --spacing-xl: 4rem;
-
-  --border-radius: 8px;
-  --transition-speed: 0.3s;
-  --header-height: 72px;
+  --color-bg: #ffffff;
+  --color-text: #0f172a;
 }
 
 [data-theme='dark'] {
-  --color-bg: #0f172a;
-  --color-text: #e2e8f0;
-  --color-primary: #3b82f6;
-  --color-card-bg: #1e293b;
-  --color-border: #334155;
+  --color-primary: #60a5fa;
+  --color-bg: #0b1120;
+  --color-text: #e8eefc;
 }
 ```
 
-리셋과 기본 타이포그래피를 잡습니다.
+1. **한 곳만 고치면 전부 바뀝니다.** 주요 색상이 30곳에 쓰여도 `--color-primary` 한 줄만 수정하면 됩니다.
+2. **다크모드가 거의 공짜가 됩니다.** 이게 가장 큰 이점입니다. `[data-theme='dark']`에서 **변수 값만 다시 정의**하면, 그 변수를 쓰는 모든 규칙이 자동으로 따라옵니다. 다크모드용 CSS를 따로 쓸 필요가 없습니다.
+3. **런타임에 바뀝니다.** Sass 변수는 빌드 시점에 고정되지만, CSS 변수는 JS로 즉시 바꿀 수 있습니다. 그래서 `setAttribute('data-theme', ...)` 한 줄로 전체 색상이 전환됩니다.
+4. **이름이 의도를 설명합니다.** `#2563eb`보다 `--color-primary`가 무엇인지 읽힙니다.
+5. **상속됩니다.** 특정 영역에서만 값을 덮어쓰면 그 하위에만 적용됩니다.
 
-```css
-*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+### Q. `onclick` 대신 `addEventListener`를 쓴 이유는?
 
-html { scroll-behavior: smooth; }
+| 비교 항목 | `onclick="fn()"` | `addEventListener('click', fn)` |
+| --- | --- | --- |
+| 핸들러 개수 | **1개만.** 두 번째를 넣으면 앞엣것을 덮어씀 | **여러 개 등록 가능.** 등록 순서대로 전부 실행 |
+| 코드 위치 | HTML 안에 JS가 섞임 | JS 파일에 모임 (관심사 분리) |
+| 제거 | 불가능에 가까움 | `removeEventListener`로 제거 |
+| 이벤트 단계 | 버블링만 | 캡처 단계도 선택 가능 (`{ capture: true }`) |
+| 부가 옵션 | 없음 | `{ once: true }`, `{ passive: true }` 등 |
+| 동적 요소 | 문자열로 HTML을 만들어야 해서 취약 | 생성 직후 코드로 안전하게 연결 |
+| 보안 | 인라인 스크립트라 CSP에서 차단됨 | CSP 환경에서 정상 동작 |
 
-body {
-  font-family: var(--font-main);
-  color: var(--color-text);
-  background-color: var(--color-bg);
-  line-height: 1.6;
-  transition: background-color var(--transition-speed), color var(--transition-speed);
-}
-
-section {
-  padding: var(--spacing-xl) var(--spacing-md);
-  scroll-margin-top: var(--header-height);  /* 고정 헤더에 제목이 가려지지 않게 */
-}
-```
-
-> **`scroll-margin-top`이 중요합니다.** 헤더가 `position: fixed`인 상태에서 앵커 링크로
-> 이동하면 섹션 제목이 헤더 아래에 가려집니다. 이 속성으로 헤더 높이만큼 여백을 확보합니다.
-
-한글 폰트는 Pretendard를 사용했습니다.
-
-```html
-<link rel="stylesheet"
-      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
-```
-
-## 4단계 — 레이아웃
-
-### 네비게이션 (Flexbox)
-
-```css
-header {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%;
-  z-index: 1000;
-  background-color: var(--color-nav-bg);
-  backdrop-filter: blur(10px);
-  transition: box-shadow var(--transition-speed);
-}
-
-header.scrolled { box-shadow: 0 2px 10px var(--color-shadow); }
-
-nav {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: var(--spacing-md);
-  display: flex;
-  justify-content: space-between;   /* 로고 왼쪽, 나머지 오른쪽 */
-  align-items: center;
-}
-```
-
-### Projects 카드 (Grid)
-
-```css
-#projects-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--spacing-lg);
-  max-width: 1200px;
-  margin: 0 auto;
-}
-```
-
-`auto-fit` + `minmax`를 쓰면 미디어 쿼리 없이도 화면 폭에 따라 열 개수가 자동 조절됩니다.
-
-## 5단계 — 반응형 (모바일 퍼스트)
-
-기본 CSS가 모바일이고, `min-width` 미디어 쿼리로 넓은 화면을 덧씌웁니다.
-
-```css
-/* 모바일 기본: 햄버거 보임, 메뉴는 숨겨진 드롭다운 */
-.hamburger { display: flex; flex-direction: column; gap: 5px; }
-
-.nav-links {
-  display: none;
-  flex-direction: column;
-  position: absolute;
-  top: 100%; left: 0;
-  width: 100%;
-  background-color: var(--color-nav-bg);
-  padding: var(--spacing-md);
-  text-align: center;
-}
-
-.nav-links.active { display: flex; }
-
-/* 태블릿 이상: 반대로 */
-@media (min-width: 768px) {
-  .hamburger { display: none; }
-  .nav-links {
-    display: flex;
-    flex-direction: row;
-    position: static;
-    width: auto;
-    padding: 0;
-  }
-  .about-content { flex-direction: row; text-align: left; }
-}
-```
-
-> `.nav-links`가 `position: absolute`일 때 기준이 되는 요소는 `position: fixed`인
-> `<header>`입니다. `top: 100%`는 헤더 바로 아래를 의미합니다.
-
-## 6단계 — 시각 효과
-
-버튼 호버, 카드 호버, 스크롤 탑 버튼, fade-in 애니메이션을 정의합니다.
-
-```css
-.btn-primary:hover {
-  background-color: var(--color-primary-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px var(--color-shadow);
-}
-
-.scroll-top {
-  position: fixed;
-  bottom: 2rem; right: 2rem;
-  opacity: 0;
-  visibility: hidden;          /* 숨김 상태에서 클릭 안 되게 */
-  transform: translateY(20px);
-  transition: opacity var(--transition-speed),
-              transform var(--transition-speed),
-              visibility var(--transition-speed);
-}
-
-.scroll-top.visible {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
-}
-
-.fade-in {
-  opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 0.6s ease, transform 0.6s ease;
-}
-
-.fade-in.visible { opacity: 1; transform: translateY(0); }
-```
-
-> **`hidden` 속성 대신 `visibility`를 씁니다.** `hidden`은 `display: none`이라 트랜지션이
-> 재생되지 않습니다. `visibility: hidden` + `opacity: 0` 조합이면 페이드 효과가 정상 동작하면서
-> 숨겨진 버튼이 클릭을 가로채지도 않습니다.
-
-접근성을 위해 모션 최소화 설정도 존중합니다.
-
-```css
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
-  .fade-in { opacity: 1; transform: none; }
-}
-```
-
-## 7단계 — JS 기본 인터랙션
+이 프로젝트에서 실제로 문제가 됐을 지점 — **재시도 버튼**은 에러가 날 때마다 JS가 새로 만들어내는 요소입니다.
 
 ```js
-const header = document.querySelector('#header');
-const hamburger = document.querySelector('.hamburger');
-const navLinks = document.querySelector('.nav-links');
-const navItems = document.querySelectorAll('.nav-links a');
-const scrollTopBtn = document.querySelector('.scroll-top');
+document.querySelector('#retry-btn').addEventListener('click', loadProjects);
+```
 
-const HEADER_SCROLL_THRESHOLD = 60;
-const SCROLL_TOP_THRESHOLD = 300;
+`onclick`이었다면 문자열 안에 전역 함수 이름을 박아 넣어야 하고, 함수 이름을 바꾸는 순간 조용히 깨집니다.
 
-function closeMenu() {
-  hamburger.classList.remove('active');
-  navLinks.classList.remove('active');
-  hamburger.setAttribute('aria-expanded', 'false');
-}
+## 항목 3 — 코드 흐름 설명
 
-// 햄버거 토글
-hamburger.addEventListener('click', () => {
-  const isOpen = hamburger.classList.toggle('active');
-  navLinks.classList.toggle('active', isOpen);
-  hamburger.setAttribute('aria-expanded', String(isOpen));
-});
+### Q. "이벤트 → 상태 변경 → 화면 업데이트" 흐름을 짚어달라 (다크모드 예시)
 
-// 부드러운 스크롤 + 메뉴 닫기 (하나의 핸들러로 통합)
-navItems.forEach((item) => {
-  item.addEventListener('click', (e) => {
-    const targetSection = document.querySelector(item.getAttribute('href'));
-    if (targetSection) {
-      e.preventDefault();
-      targetSection.scrollIntoView({ behavior: 'smooth' });
-    }
-    closeMenu();
-  });
+**1단계 — 이벤트**: 토글 버튼 클릭을 `addEventListener`가 받습니다.
+
+```js
+elements.themeToggle.addEventListener('click', () => {
+  setTheme(STATE.theme === 'dark' ? 'light' : 'dark');
 });
 ```
 
-> **같은 요소에 핸들러를 두 번 붙이지 않습니다.** "메뉴 닫기"와 "부드러운 스크롤"을 별도
-> `forEach`로 나누면 동일한 클릭에 리스너가 두 개 등록되어 추적이 어려워집니다. 하나로 합칩니다.
-
-스크롤 이벤트는 `requestAnimationFrame`으로 스로틀링합니다.
+**2단계 — 상태 변경**: `setTheme()`이 `STATE.theme`을 바꾸고 `localStorage`에 저장합니다.
+여기서는 DOM을 직접 건드리지 않습니다.
 
 ```js
-let scrollTicking = false;
-
-function handleScroll() {
-  const scrollY = window.scrollY;
-  header.classList.toggle('scrolled', scrollY > HEADER_SCROLL_THRESHOLD);
-  scrollTopBtn.classList.toggle('visible', scrollY > SCROLL_TOP_THRESHOLD);
-  scrollTicking = false;
-}
-
-window.addEventListener('scroll', () => {
-  if (!scrollTicking) {
-    scrollTicking = true;
-    window.requestAnimationFrame(handleScroll);
+function setTheme(theme) {
+  STATE.theme = theme;                       // ← 상태 변경
+  try {
+    localStorage.setItem('theme', theme);    // ← 영속화
+  } catch (error) {
+    console.warn('테마를 저장하지 못했습니다.', error);
   }
-});
-
-handleScroll();   // 새로고침으로 중간 위치에서 시작한 경우를 위해 초기 1회 실행
-
-scrollTopBtn.addEventListener('click', () => {
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-});
+  renderTheme();                             // ← 화면 갱신 요청
+}
 ```
 
-> **스크롤 이벤트는 초당 수십~수백 번 발생합니다.** 매번 DOM을 만지면 끊김이 생기므로
-> `requestAnimationFrame`으로 프레임당 한 번만 처리되게 묶습니다.
-
-## 8단계 — 다크모드 + localStorage
+**3단계 — 화면 업데이트**: `renderTheme()`이 `STATE`를 읽어 DOM에 반영합니다.
 
 ```js
-const themeToggle = document.querySelector('.theme-toggle');
-
-function updateThemeIcon(theme) {
-  themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
-  themeToggle.setAttribute('aria-label',
-    theme === 'dark' ? '라이트모드 전환' : '다크모드 전환');
+function renderTheme() {
+  document.documentElement.setAttribute('data-theme', STATE.theme);
+  const isDark = STATE.theme === 'dark';
+  elements.themeToggle.textContent = isDark ? '☀️' : '🌙';
+  elements.themeToggle.setAttribute('aria-label', isDark ? '라이트모드 전환' : '다크모드 전환');
 }
+```
 
-updateThemeIcon(document.documentElement.getAttribute('data-theme') || 'light');
+**4단계 — CSS가 이어받음**: `data-theme="dark"`가 붙는 순간 `[data-theme='dark']` 블록의 변수 값이 적용되고, 그 변수를 쓰는 모든 요소의 색이 한 번에 바뀝니다.
 
-themeToggle.addEventListener('click', () => {
-  const currentTheme = document.documentElement.getAttribute('data-theme');
-  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+**핵심**: 클릭 핸들러는 DOM을 전혀 모릅니다. 상태만 바꾸고, 그리는 일은 `render`가 전담합니다. 나중에 "테마 토글을 헤더 말고 푸터에도 추가"해야 해도 `setTheme()`만 호출하면 되고, 렌더 코드는 손댈 필요가 없습니다.
 
-  document.documentElement.setAttribute('data-theme', newTheme);   // 1. 상태 변경
+### Q. `async/await` + `try/catch`로 성공·실패를 어떻게 분기했는가?
+
+```js
+async function loadProjects() {
+  STATE.projects = { status: 'loading', items: [], errorMessage: '' };
+  renderProjects();                       // ① 즉시 로딩 화면
 
   try {
-    localStorage.setItem('theme', newTheme);                       // 2. 저장
-  } catch (e) {
-    console.warn('테마를 저장하지 못했습니다.', e);
+    const response = await fetch(url);    // ② 네트워크 응답 대기
+
+    if (!response.ok) {                   // ③ HTTP 에러를 직접 검사
+      throw new Error(getErrorMessage(response.status));
+    }
+
+    const repos = await response.json();  // ④ 본문 파싱 대기
+    const items = repos.filter(...).map(...);
+
+    STATE.projects = {                    // ⑤ 성공 / 빈 상태 분기
+      status: items.length === 0 ? 'empty' : 'success',
+      items,
+      errorMessage: '',
+    };
+  } catch (error) {                       // ⑥ 실패는 전부 여기로
+    console.error('GitHub API 호출 실패:', error);
+    STATE.projects = { status: 'error', items: [], errorMessage: error.message };
   }
 
-  updateThemeIcon(newTheme);                                       // 3. 화면 반영
-});
+  renderProjects();                       // ⑦ 최종 상태를 한 번만 렌더
+}
 ```
 
-> **`localStorage` 접근은 `try/catch`로 감쌉니다.** 시크릿 모드나 사이트 데이터가 차단된
-> 브라우저에서는 `setItem`이 예외를 던집니다. 감싸지 않으면 그 시점에 스크립트 전체가 멈춥니다.
+**흐름 정리**
 
-### FOUC(화면 깜빡임) 방지
+1. 함수 시작 시 `status: 'loading'` → 스피너 표시
+2. `await fetch()` — 네트워크 끊김·DNS 실패 등은 여기서 reject → `catch`로 직행
+3. **`response.ok` 검사가 필수인 이유**: `fetch`는 404·403 같은 HTTP 에러에서 **reject하지 않습니다.** "요청은 도착했고 응답도 받았다"로 보기 때문입니다. 그래서 직접 확인하고 `throw`해야 `catch`로 넘어갑니다. 이걸 빠뜨리면 404 응답 본문을 정상 데이터로 착각해 처리하다가 엉뚱한 곳에서 터집니다.
+4. `catch`가 네트워크 에러와 `throw`한 HTTP 에러를 **한곳에서** 받습니다
+5. `renderProjects()`는 `try`/`catch` **바깥**에 한 번만 둡니다. 성공이든 실패든 마지막에 반드시 한 번 그려지고, 렌더 호출이 중복되지 않습니다
 
-`defer` 스크립트 안에서 테마를 불러오면 **HTML 파싱 → 라이트 모드 렌더링 → JS 실행 → 다크 모드 적용**
-순서가 되어 화면이 한 번 번쩍입니다. `<head>`에 즉시 실행 스크립트를 넣어 해결합니다.
+`.then().catch()` 체인 대신 `async/await`를 쓴 이유는, 위에서 아래로 읽히는 동기 코드와 같은 순서로 읽을 수 있고 `try/catch`라는 익숙한 에러 처리 문법을 그대로 쓸 수 있기 때문입니다.
+
+### Q. `map`, `filter`로 GitHub 데이터를 카드 UI로 바꾸는 과정은?
+
+**1단계 — 원본 응답**: GitHub API는 저장소당 80개가 넘는 필드를 줍니다.
+
+```json
+[{ "name": "...", "description": "...", "html_url": "...",
+   "stargazers_count": 0, "language": "Python", "fork": false,
+   "watchers": 0, "owner": { ... }, ... }]
+```
+
+**2단계 — `filter`로 걸러내기**: 포크한 저장소는 내 작업물이 아니므로 제외합니다.
+
+```js
+repos.filter((repo) => !repo.fork)
+```
+
+`filter`는 **개수를 줄입니다.** 콜백이 `true`를 반환한 요소만 남은 새 배열을 만듭니다(원본은 그대로).
+
+**3단계 — `map`으로 모양 바꾸기**: 화면에 필요한 5개 필드만 남기고 이름도 정리합니다.
+
+```js
+.map(({ name, description, html_url, stargazers_count, language }) => ({
+  name,
+  description: description || '설명이 없습니다.',   // null 대비
+  url: html_url,
+  stars: stargazers_count,
+  language: language || '기타',
+}))
+```
+
+`map`은 **개수는 그대로 두고 각 요소를 변환합니다.** 구조분해 할당으로 필요한 필드만 꺼냈고, `||`로 빈 값의 기본값을 여기서 미리 채웠습니다. 덕분에 렌더 함수는 값이 비었는지 신경 쓸 필요가 없습니다.
+
+**4단계 — `map`으로 HTML 문자열 만들기**: 이 결과를 `STATE.projects.items`에 저장하고, 렌더 단계에서 다시 `map`으로 카드 마크업을 만듭니다.
+
+```js
+items
+  .map(({ name, description, url, stars, language }) => `
+    <article class="project-card">
+      <h3>${escapeHtml(name)}</h3>
+      ...
+    </article>
+  `)
+  .join('');
+```
+
+**5단계 — `join('')`으로 합치기**: `map`의 결과는 문자열 **배열**입니다. 그냥 넣으면 요소 사이에 쉼표가 찍히므로 `join('')`으로 하나의 문자열로 합칩니다.
+
+```
+[원본 80필드 × N개]
+   ↓ filter   개수를 줄임 (포크 제외)
+[N' 개]
+   ↓ map      모양을 바꿈 (5필드만, 기본값 채움)
+[{name, description, url, stars, language} × N']  ← STATE에 저장
+   ↓ map      HTML 문자열로 변환
+['<article>...', '<article>...']
+   ↓ join('') 하나로 합침
+'<article>...</article><article>...</article>'
+```
+
+`for` 루프 대신 쓴 이유는 **원본을 바꾸지 않고**(불변성) **각 단계가 하나의 일만 하기** 때문입니다. "거르고 → 바꾸고 → 합친다"가 코드에 그대로 드러납니다.
+
+> **보안 처리**: 저장소 설명은 누구나 수정할 수 있는 외부 입력입니다. `<img src=x onerror=alert(1)>` 같은 값이 들어오면 `innerHTML`이 그대로 실행하므로, `escapeHtml()`로 `<`, `>`, `&`, 따옴표를 엔티티로 변환한 뒤 넣습니다.
+
+### Q. Flexbox와 Grid를 각각 어디에 썼고, 왜 그렇게 나눴는가?
+
+**기준**: 한 방향으로 늘어놓으면 Flexbox, 행과 열을 함께 다루거나 반복되는 칸을 채우면 Grid.
+
+| 적용 위치 | 선택 | 이유 |
+| --- | --- | --- |
+| 네비게이션 바 | **Flex** | 로고·메뉴·버튼을 가로 한 줄로 배치하고 `justify-content: space-between`으로 양끝 정렬 |
+| 히어로 버튼, 태그 목록 | **Flex** | 한 줄로 늘어놓다가 좁아지면 `flex-wrap`으로 자연스럽게 줄바꿈 |
+| 프로젝트 카드 내부 | **Flex (세로)** | 제목→설명→메타→버튼 세로 한 줄. `flex-grow: 1`을 설명에 줘서 **버튼 높이를 카드마다 맞춤** |
+| 소셜 링크, 스킬 칩 | **Flex** | 개수가 유동적인 한 줄 나열 |
+| 히어로 전체 배치 | **Grid** | 텍스트와 프로필 카드를 `1.1fr 0.9fr` 비율로 나누는 2열 구조 |
+| 프로젝트 카드 목록 | **Grid** | `repeat(auto-fit, minmax(280px, 1fr))` — 화면 폭에 따라 열 개수가 **자동으로** 1→2→3열 |
+| About 하이라이트, Skills 그룹 | **Grid** | 같은 `auto-fit` 패턴. 카드 개수가 바뀌어도 코드 수정 불필요 |
+
+**Grid를 고른 결정적 이유**는 `auto-fit` + `minmax`입니다.
+
+```css
+grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+```
+
+"최소 280px을 확보하되, 들어갈 수 있는 만큼 열을 만들고 남는 공간은 똑같이 나눠 가져라"는 뜻입니다. **미디어 쿼리를 한 줄도 쓰지 않고** 반응형 카드 그리드가 완성됩니다. Flexbox로 같은 걸 하려면 `flex-basis`와 `gap`을 계산해 넣어야 하고, 마지막 줄의 카드가 홀로 남으면 폭이 어긋납니다.
+
+반대로 네비게이션을 Grid로 만들면 열 개수를 미리 정해야 해서, 메뉴 항목이 하나 늘 때마다 CSS를 고쳐야 합니다. 그래서 개수가 유동적인 한 줄 배치는 Flex가 맞습니다.
+
+## 항목 4 — 설계 판단
+
+### Q. STATE 객체를 따로 만든 이유는? 그냥 변수로 하면 안 되는가?
+
+**동작은 합니다.** 규모가 작으면 지역 변수로도 돌아갑니다. 문제는 화면에 영향을 주는 값이 늘어날 때입니다.
+
+**변수로 흩어놓았을 때 생기는 문제**
+
+1. **진실의 출처가 둘이 됩니다.**
+   ```js
+   let isMenuOpen = false;
+   hamburger.classList.toggle('active');   // ← DOM도 상태를 들고 있음
+   ```
+   변수와 DOM 클래스가 각각 상태를 가지면, 한쪽만 바꾸는 코드가 생기는 순간 둘이 어긋납니다. "메뉴가 열렸다고 나오는데 화면은 닫혀 있는" 버그가 여기서 나옵니다.
+
+2. **디버깅이 어려워집니다.** 상태가 파일 여기저기 흩어지면 지금 화면이 어떤 상태인지 알려면 변수를 하나씩 찍어봐야 합니다. STATE가 있으면 `console.log(STATE)` 한 줄로 전체가 보입니다.
+
+3. **연관된 값이 따로 놉니다.**
+   ```js
+   let isLoading, projects, hasError, errorMessage;   // 4개가 제각각
+   ```
+   `isLoading = false`인데 `hasError`도 `false`이고 `projects`도 비어 있는 **불가능한 조합**이 만들어질 수 있습니다. 이 프로젝트는 하나의 `status` 문자열로 묶어서 이런 조합 자체를 막았습니다.
+   ```js
+   projects: { status: 'loading' | 'success' | 'empty' | 'error', items, errorMessage }
+   ```
+   `status`는 항상 네 값 중 **하나**입니다. 로딩이면서 동시에 에러인 상태는 만들 수 없습니다.
+
+4. **렌더링 규칙이 무너집니다.** 상태가 모여 있으면 "STATE가 바뀌면 render를 부른다"는 규칙 하나로 끝납니다. 흩어져 있으면 값을 바꾸는 모든 지점에서 DOM 조작을 각각 기억해야 하고, 한 군데를 빠뜨리면 화면이 갱신되지 않습니다.
+
+**정리**: STATE 객체는 *지금 이 화면이 어떤 상태인지*에 대한 **단일 진실 공급원(Single Source of Truth)** 입니다. React·Vue 같은 프레임워크가 하는 일의 핵심도 결국 이것이고, 이 프로젝트는 그 패턴을 프레임워크 없이 직접 구현한 것입니다.
+
+### Q. 반응형을 "모바일 퍼스트"로 작성한 이유는?
+
+**작성 방식**: 기본 CSS는 모바일용이고, `@media (min-width: ...)`로 넓은 화면을 덧씌웁니다.
+이 프로젝트에는 `max-width` 미디어 쿼리가 **0개**입니다.
+
+```css
+/* 기본 = 모바일 */
+.nav-links { display: none; }
+.hamburger { display: flex; }
+
+/* 768px 이상에서 덮어쓰기 */
+@media (min-width: 768px) {
+  .nav-links { display: flex; }
+  .hamburger { display: none; }
+}
+```
+
+**이유**
+
+1. **제약이 큰 쪽부터 설계하게 됩니다.** 좁은 화면에서 먼저 시작하면 정말 필요한 것만 남기게 됩니다. 반대로 데스크톱부터 만들면 모바일에서 무엇을 덜어낼지 계속 고민하게 되고, 결국 `display: none`으로 감추는 코드가 쌓입니다.
+
+2. **CSS가 짧아집니다.** 모바일은 대부분 1열 세로 배치라 기본값에 가깝습니다. 그래서 기본 스타일이 단순해지고, 복잡한 다단 레이아웃만 미디어 쿼리 안에 들어갑니다. 반대로 하면 기본이 복잡해지고 그걸 되돌리는 코드가 미디어 쿼리마다 반복됩니다.
+
+3. **모바일에서 더 빠릅니다.** 모바일 브라우저는 기본 스타일만 적용하면 되고, `min-width` 조건이 맞지 않는 블록은 평가하지 않습니다.
+
+4. **트래픽 비중이 모바일에 있습니다.** 포트폴리오는 링크로 공유되고, 링크는 대부분 휴대폰에서 먼저 열립니다.
+
+5. **점진적 향상(Progressive Enhancement)에 맞습니다.** 작은 화면에서 동작하는 기본을 먼저 만들고, 공간이 생길 때 기능을 더하는 방향이 자연스럽습니다.
+
+---
+
+# 구현하면서 만난 문제와 해결
+
+| 문제 | 원인 | 해결 |
+| --- | --- | --- |
+| PowerShell에서 `mkdir -p a/{b,c}` 실패 | 중괄호 확장은 bash 문법 | `New-Item -ItemType Directory -Force -Path a\b, a\c` |
+| 앵커 이동 시 제목이 헤더에 가림 | 헤더가 `position: fixed` | 섹션에 `scroll-margin-top` 추가 |
+| 스크롤 탑 버튼 페이드가 재생 안 됨 | `hidden`은 `display: none`이라 트랜지션 불가 | `visibility` + `opacity` 조합으로 변경 |
+| 빈 폼 제출 시 첫 에러만 표시 | `every()`의 단축 평가 | 전체 필드를 `forEach`로 먼저 검증한 뒤 결과 집계 |
+| 404 응답인데 `catch`로 안 감 | `fetch`는 HTTP 에러를 reject하지 않음 | `response.ok` 확인 후 직접 `throw` |
+| 새로고침 시 화면이 흰색으로 번쩍임 (FOUC) | `defer` 스크립트는 렌더링 이후 실행 | `<head>`에 테마 복원 인라인 스크립트 추가 |
+| JS 파일 전체가 문법 오류 | 주석 안에 쓴 `set*/handle*`의 `*/`가 블록 주석을 조기 종료 | 주석에서 `*/` 문자열 제거 |
+| 저장소 설명에 HTML이 들어갈 위험 | `innerHTML`은 문자열을 마크업으로 해석 | `escapeHtml()`로 이스케이프 후 삽입 |
+
+### FOUC 방지 코드
 
 ```html
 <link rel="stylesheet" href="css/style.css">
 <script>
-  // CSS가 그려지기 전에 테마 속성을 먼저 세팅한다.
+  // CSS가 그려지기 전에 테마 속성을 먼저 세팅한다 (defer 아님 = 즉시 실행)
   try {
     var saved = localStorage.getItem('theme');
     if (saved) document.documentElement.setAttribute('data-theme', saved);
@@ -485,220 +476,38 @@ themeToggle.addEventListener('click', () => {
 </script>
 ```
 
-## 9단계 — 스크롤 애니메이션 (Intersection Observer)
-
-애니메이션을 적용할 섹션에 `class="fade-in"`을 붙입니다.
+`main.js`는 이 값을 읽어 STATE를 맞추기만 합니다.
 
 ```js
-const fadeElements = document.querySelectorAll('.fade-in');
-
-const fadeObserver = new IntersectionObserver(
-  (entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-        fadeObserver.unobserve(entry.target);   // 한 번만 실행
-      }
-    });
-  },
-  { threshold: 0.2, rootMargin: '0px' }
-);
-
-fadeElements.forEach((el) => fadeObserver.observe(el));
+STATE.theme = document.documentElement.getAttribute('data-theme') || 'light';
+renderTheme();
 ```
 
-**동작 순서**
+---
 
-1. 초기 상태: `.fade-in`은 `opacity: 0`, `translateY(30px)`
-2. 요소가 뷰포트에 20% 이상 들어오면 Observer가 감지
-3. `.visible` 추가 → CSS 트랜지션으로 부드럽게 나타남
-4. `unobserve`로 관찰 해제 → 다시 스크롤해도 반복되지 않음
+# ES6+ 문법 사용 위치
 
-> 스크롤 이벤트로 `getBoundingClientRect()`를 계속 계산하는 방식보다 훨씬 가볍습니다.
-> 브라우저가 렌더링 파이프라인 안에서 교차 여부를 판단해주기 때문입니다.
+| 문법 | 사용 위치 | 예시 |
+| --- | --- | --- |
+| `const` / `let` | 전체 (`var` 미사용) | `const STATE = { ... }` |
+| 화살표 함수 | 이벤트 핸들러, 콜백 | `item.addEventListener('click', (event) => { ... })` |
+| 템플릿 리터럴 | 카드 HTML 생성, 셀렉터 조합 | `` `#${field}-error` `` |
+| 구조분해 할당 | API 응답에서 필드 추출 | `({ name, html_url, stargazers_count }) => ...` |
+| 단축 속성명 | 객체 생성 | `{ name, items, url }` |
+| `filter` | 포크 저장소 제외 | `repos.filter((repo) => !repo.fork)` |
+| `map` | 데이터 변환, HTML 생성 | `items.map(...).join('')` |
+| `forEach` | DOM 컬렉션 순회 | `elements.navItems.forEach(...)` |
+| `every` | 폼 검증 결과 집계 | `Object.values(STATE.formErrors).every((m) => m === '')` |
+| `find` | 첫 오류 필드 찾기 | `Object.keys(...).find((f) => STATE.formErrors[f] !== '')` |
+| `Object.entries` / `Object.keys` / `Object.values` | STATE 객체 순회 | `Object.entries(STATE.formErrors).forEach(...)` |
+| `async` / `await` | GitHub API 호출 | `const response = await fetch(url)` |
+| `try` / `catch` | 네트워크·스토리지 예외 처리 | `catch (error) { STATE.projects = { status: 'error', ... } }` |
+| 논리 연산 기본값 | 누락 필드 대체 | `description \|\| '설명이 없습니다.'` |
+| 삼항 연산자 | 조건부 값 | `items.length === 0 ? 'empty' : 'success'` |
 
-## 10단계 — 폼 유효성 검사
+---
 
-검증 규칙을 객체로 분리하면 필드가 늘어나도 코드가 늘어나지 않습니다.
-
-```js
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-const validators = {
-  name: (v) => (v === '' ? '이름을 입력해주세요.' : ''),
-  email: (v) => {
-    if (v === '') return '이메일을 입력해주세요.';
-    if (!emailRegex.test(v)) return '올바른 이메일 형식이 아닙니다.';
-    return '';
-  },
-  message: (v) => {
-    if (v === '') return '메시지를 입력해주세요.';
-    if (v.length < 10) return '메시지는 10자 이상 입력해주세요.';
-    return '';
-  },
-};
-
-function validateField(input) {
-  const errorEl = document.querySelector(`#${input.id}-error`);
-  const errorMessage = validators[input.id](input.value.trim());
-
-  errorEl.textContent = errorMessage;
-  input.classList.toggle('invalid', Boolean(errorMessage));
-  input.setAttribute('aria-invalid', String(Boolean(errorMessage)));
-
-  return !errorMessage;
-}
-
-const formFields = [nameInput, emailInput, messageInput];
-
-formFields.forEach((input) => {
-  input.addEventListener('input', () => validateField(input));
-});
-```
-
-제출 처리:
-
-```js
-contactForm.addEventListener('submit', (e) => {
-  e.preventDefault();   // 페이지 새로고침 방지
-
-  // every()는 단축 평가되므로 map()으로 모든 필드를 먼저 검증한다
-  const results = formFields.map((input) => validateField(input));
-  const isValid = results.every(Boolean);
-
-  if (!isValid) {
-    formFields.find((i) => i.classList.contains('invalid')).focus();
-    return;
-  }
-
-  formSuccess.hidden = false;
-  contactForm.reset();
-  // ... 에러 표시 초기화 ...
-
-  clearTimeout(successTimer);
-  successTimer = setTimeout(() => { formSuccess.hidden = true; }, 3000);
-});
-```
-
-> **`formFields.every(validateField)`로 쓰면 안 됩니다.** `every()`는 첫 `false`에서 멈추기
-> 때문에 이름만 비어 있어도 이메일·메시지 에러는 표시되지 않습니다. `map()`으로 전부 실행한 뒤
-> 결과를 합산해야 모든 에러가 한 번에 보입니다.
-
-> **에러 메시지 영역에 `min-height: 1.2em`을 줍니다.** 그렇지 않으면 메시지가 나타날 때마다
-> 아래 요소들이 밀려 레이아웃이 튑니다.
-
-## 11단계 — GitHub API 연동
-
-이 프로젝트의 핵심입니다. `fetch` + `async/await`로 **로딩 / 성공 / 에러 / 빈 상태** 4가지를 모두 처리합니다.
-
-```js
-const GITHUB_USERNAME = '5312ksy-beep';
-const projectsContainer = document.querySelector('#projects-container');
-
-// 저장소 설명은 외부 입력이므로 그대로 innerHTML에 넣지 않는다
-function escapeHtml(value) {
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-async function fetchProjects() {
-  renderLoading();                                   // 1. 로딩
-
-  try {
-    const response = await fetch(
-      `https://api.github.com/users/${GITHUB_USERNAME}/repos?sort=updated&per_page=6`
-    );
-
-    if (!response.ok) {
-      if (response.status === 404) throw new Error('GitHub 사용자를 찾을 수 없습니다.');
-      if (response.status === 403) throw new Error('GitHub API 호출 한도를 초과했습니다. 잠시 후 다시 시도해주세요.');
-      throw new Error(`프로젝트를 불러올 수 없습니다. (HTTP ${response.status})`);
-    }
-
-    const repos = await response.json();
-
-    if (repos.length === 0) {
-      renderEmpty();                                 // 3. 빈 상태
-    } else {
-      renderProjects(repos);                         // 2. 성공
-    }
-  } catch (error) {
-    console.error('GitHub API 호출 실패:', error);
-    renderError(error.message);                      // 4. 에러
-  }
-}
-
-fetchProjects();
-```
-
-카드 렌더링에는 구조분해 할당 + `map` + 템플릿 리터럴을 씁니다.
-
-```js
-function renderProjects(repos) {
-  projectsContainer.innerHTML = repos
-    .map(({ name, description, html_url, stargazers_count, language }) => `
-      <article class="project-card">
-        <h3>${escapeHtml(name)}</h3>
-        <p>${escapeHtml(description || '설명이 없습니다.')}</p>
-        <div class="card-meta">
-          <span>⭐ ${stargazers_count}</span>
-          <span>${escapeHtml(language || '기타')}</span>
-        </div>
-        <a href="${escapeHtml(html_url)}" target="_blank" rel="noopener"
-           class="btn btn-secondary">GitHub에서 보기</a>
-      </article>
-    `)
-    .join('');
-}
-```
-
-> **`fetch`는 HTTP 에러에서 reject되지 않습니다.** 404나 403도 "요청은 성공했다"로 취급되어
-> `catch`로 넘어가지 않습니다. 반드시 `response.ok`를 직접 확인하고 `throw`해야 합니다.
-
-> **외부 데이터를 `innerHTML`에 넣을 때는 이스케이프합니다.** 저장소 설명은 누구나 바꿀 수 있는
-> 값이라 `<img onerror=...>` 같은 문자열이 들어오면 그대로 실행됩니다. `escapeHtml`로 막습니다.
-
-> **`rel="noopener"`를 붙입니다.** `target="_blank"`로 열린 페이지가 `window.opener`를 통해
-> 원본 탭을 조작하는 것을 차단합니다.
-
-### API 호출 한도 주의
-
-인증 없이 GitHub API를 호출하면 **IP당 시간당 60회** 제한이 있습니다.
-초과하면 403이 반환되고 에러 UI가 표시됩니다. 개발 중 새로고침을 반복하면 쉽게 걸리니 주의하세요.
-
-## 12단계 — 점검
-
-### 상태 → 렌더링 흐름 3가지
-
-| # | 사용자 이벤트 | 상태 변경 | 화면 업데이트 |
-| --- | --- | --- | --- |
-| 1 | 다크모드 토글 클릭 | `data-theme` 속성 변경 + `localStorage` 저장 | CSS 변수 교체로 전체 색상 전환, 아이콘 변경 |
-| 2 | 페이지 로드 / 재시도 클릭 | 로딩 → 성공·에러·빈 상태 | 스피너 → 카드 목록 / 에러+재시도 / 빈 메시지 |
-| 3 | 폼 입력 및 제출 | 각 필드의 valid / invalid 판정 | 에러 메시지 표시·숨김, 테두리 색 변경, 성공 메시지 |
-
-### 크로스 브라우징 체크리스트
-
-- [ ] 개발자도구 → 기기 툴바 토글(`Ctrl+Shift+M`)
-- [ ] 모바일(375px): 햄버거 동작, 세로 레이아웃
-- [ ] 태블릿(768px): 메뉴 가로 전환, About 가로 배치
-- [ ] 데스크톱(1024px+): 전체 레이아웃
-- [ ] 다크모드 전환 후 새로고침 → 유지되는지, 깜빡임 없는지
-- [ ] GitHub API 정상 로딩 / 에러 시 재시도 버튼 동작
-- [ ] 폼: 빈 제출 → 에러 3개 동시 표시 / 잘못된 이메일 → 에러 / 정상 제출 → 성공
-- [ ] 스크롤 애니메이션 동작
-- [ ] 스크롤 탑 버튼: 300px 이상에서 노출, 클릭 시 상단 이동
-- [ ] `Tab` 키만으로 모든 인터랙션 접근 가능한지
-
-### 에러 상태 테스트 방법
-
-`GITHUB_USERNAME`을 존재하지 않는 아이디(예: `asdfasdf12345678`)로 바꾸면 404 에러 UI를 확인할 수 있습니다.
-빈 상태는 저장소가 하나도 없는 계정으로 테스트합니다.
-
-## 13단계 — 배포
+# 배포 (GitHub Pages)
 
 ```powershell
 git add .
@@ -706,43 +515,13 @@ git commit -m "feat: 포트폴리오 웹사이트 구현"
 git push origin main
 ```
 
-GitHub에서 Pages 설정:
-
 1. 저장소 → **Settings** → **Pages**
 2. Source: **Deploy from a branch**
-3. Branch: `main` / `(root)` 선택 → **Save**
+3. Branch: `main` / `(root)` → **Save**
 4. 1~2분 후 `https://5312ksy-beep.github.io/codyssey-mission_B1-1/` 접속
 
 > `index.html`은 반드시 저장소 **최상위**에 있어야 합니다. GitHub Pages의 브랜치 배포는
-> 루트 또는 `/docs` 폴더만 지원하기 때문입니다.
-
----
-
-## ES6+ 문법 사용 위치
-
-| 문법 | 사용 위치 | 예시 |
-| --- | --- | --- |
-| `const` / `let` | 전체 (`var` 미사용) | `const header = document.querySelector('#header')` |
-| 화살표 함수 | 이벤트 핸들러, 콜백 | `btn.addEventListener('click', () => {...})` |
-| 템플릿 리터럴 | 카드 HTML 생성, 셀렉터 조합 | `` `#${input.id}-error` `` |
-| 구조분해 할당 | API 응답에서 값 추출 | `({ name, description, html_url }) => ...` |
-| `map` | 배열 → HTML 문자열 변환 | `repos.map(...).join('')` |
-| `forEach` | DOM 컬렉션 순회 | `navItems.forEach((item) => ...)` |
-| `every` / `find` | 폼 검증 결과 집계 | `results.every(Boolean)` |
-| `async` / `await` | GitHub API 호출 | `async function fetchProjects()` |
-| `try` / `catch` | 네트워크·스토리지 예외 처리 | `catch (error) { renderError(...) }` |
-| 옵셔널 기본값 | 누락 필드 대체 | `description \|\| '설명이 없습니다.'` |
-
-## 구현하면서 만난 문제와 해결
-
-| 문제 | 원인 | 해결 |
-| --- | --- | --- |
-| PowerShell에서 `mkdir -p a/{b,c}` 실패 | 중괄호 확장은 bash 문법 | `New-Item -ItemType Directory -Force -Path a\b, a\c` |
-| 앵커 이동 시 제목이 헤더에 가림 | 헤더가 `position: fixed` | 섹션에 `scroll-margin-top` 추가 |
-| 스크롤 탑 버튼 페이드가 재생 안 됨 | `hidden`은 `display: none`이라 트랜지션 불가 | `visibility` + `opacity` 조합으로 변경 |
-| 빈 폼 제출 시 첫 에러만 표시 | `every()`의 단축 평가 | `map()`으로 전부 검증 후 결과 집계 |
-| 404 응답인데 `catch`로 안 감 | `fetch`는 HTTP 에러를 reject하지 않음 | `response.ok` 확인 후 직접 `throw` |
-| 새로고침 시 화면이 흰색으로 번쩍임 | `defer` 스크립트는 렌더링 이후 실행 | `<head>`에 테마 복원 인라인 스크립트 추가 |
+> 루트 또는 `/docs` 폴더만 지원합니다.
 
 ## 라이선스
 

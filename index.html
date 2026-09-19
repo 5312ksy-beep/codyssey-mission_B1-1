@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>강서연 | 포트폴리오</title>
-  <meta name="description" content="HTML, CSS, JavaScript로 만든 반응형 포트폴리오 웹사이트">
+  <title>강서연 | 데이터 분석가 포트폴리오</title>
+  <meta name="description" content="복잡한 데이터를 검증하고 실제 문제를 해결하는 답으로 바꾸는 데이터 분석가 강서연의 포트폴리오">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
   <link rel="stylesheet" href="css/style.css">
@@ -22,7 +22,7 @@
   <!-- ===== 헤더 & 네비게이션 ===== -->
   <header id="header">
     <nav>
-      <a href="#hero" class="logo">강서연</a>
+      <a href="#hero" class="logo">강서연<span>.</span></a>
 
       <ul class="nav-links" id="nav-links">
         <li><a href="#about">About</a></li>
@@ -43,52 +43,149 @@
   <main>
     <!-- ===== Hero ===== -->
     <section id="hero">
-      <p class="hero-greeting">안녕하세요!</p>
-      <h1>저는 <strong>강서연</strong>입니다.</h1>
-      <p class="hero-sub">웹의 기본기를 다지며 성장하는 프론트엔드 개발자입니다.</p>
-      <div class="hero-buttons">
-        <a href="#projects" class="btn btn-primary">프로젝트 보기</a>
-        <a href="#contact" class="btn btn-secondary">연락하기</a>
+      <div class="hero-inner">
+        <div class="hero-text">
+          <p class="eyebrow">Data Analyst · 강서연</p>
+          <h1>
+            복잡한 데이터를 검증하고,<br>
+            <em>실제 문제를 해결하는 답</em>으로<br>
+            바꿉니다.
+          </h1>
+          <p class="hero-sub">
+            수학과 빅데이터사이언스를 공부하며 공공데이터, 매출·소비 데이터 등
+            다양한 실제 데이터를 분석해 왔습니다. 숫자 뒤에 숨은 맥락을 찾아
+            의사결정에 쓰이는 인사이트로 만듭니다.
+          </p>
+
+          <div class="hero-buttons">
+            <a href="#projects" class="btn btn-primary">프로젝트 보기</a>
+            <a href="#contact" class="btn btn-secondary">연락하기</a>
+          </div>
+
+          <ul class="hero-tags">
+            <li>Python</li>
+            <li>SQL</li>
+            <li>통계 분석</li>
+            <li>데이터 시각화</li>
+          </ul>
+        </div>
+
+        <div class="hero-visual">
+          <figure class="profile-card">
+            <img src="images/profile.jpg" alt="강서연 프로필 사진" class="profile-img" width="413" height="531">
+            <figcaption>
+              <p class="profile-card__name">강서연</p>
+              <p class="profile-card__role">Data Analyst</p>
+            </figcaption>
+            <ul class="profile-card__facts">
+              <li><span>전공</span><strong>수학 · 빅데이터사이언스</strong></li>
+              <li><span>관심 분야</span><strong>공공 · 매출 · 소비 데이터</strong></li>
+              <li><span>강점</span><strong>데이터 검증 · 시각화</strong></li>
+            </ul>
+          </figure>
+        </div>
       </div>
+
+      <a href="#about" class="scroll-hint" aria-label="아래로 스크롤">
+        <span>Scroll</span>
+        <span class="scroll-hint__line" aria-hidden="true"></span>
+      </a>
     </section>
 
     <!-- ===== About ===== -->
     <section id="about" class="fade-in">
+      <p class="section-eyebrow">01 — About</p>
       <h2>About Me</h2>
+      <p class="section-desc">데이터를 다루는 태도에 대해</p>
+
       <div class="about-content">
-        <img src="images/profile.jpg" alt="강서연 프로필 사진" class="profile-img" width="200" height="200">
-        <div class="about-text">
-          <p>
-            순수 HTML, CSS, JavaScript로 웹을 만들면서 브라우저가 실제로 어떻게 동작하는지
-            이해하는 데 집중하고 있습니다. 프레임워크에 기대기 전에 DOM, 이벤트, 비동기 처리를
-            직접 다뤄보는 것을 중요하게 생각합니다.
-          </p>
-          <p>
-            지금은 시맨틱 마크업과 접근성, 반응형 레이아웃, 그리고 상태를 화면에 반영하는
-            흐름을 설계하는 연습을 하고 있습니다.
-          </p>
-        </div>
+        <p class="about-lead">
+          저는 복잡한 데이터를 검증하고, 실제 문제를 해결하는 답으로 바꾸는
+          데이터 분석가입니다.
+        </p>
+        <p>
+          수학과 빅데이터사이언스를 공부하며 공공데이터, 매출·소비 데이터 등
+          다양한 실제 데이터를 분석해 왔습니다. 정제된 예제 데이터가 아니라
+          결측과 이상치가 뒤섞인 현실의 데이터를 다루면서, 분석은 결국
+          <strong>데이터를 믿을 수 있게 만드는 일에서 시작한다</strong>는 것을 배웠습니다.
+        </p>
+        <p>
+          그래서 분석에 들어가기 전에 데이터의 구조와 품질을 꼼꼼히 확인합니다.
+          그리고 분석이 끝나면 그 결과를 표와 수치로 남겨두지 않고,
+          누구나 이해할 수 있는 인사이트와 서비스로 구현하는 것까지를
+          제 역할이라고 생각합니다.
+        </p>
       </div>
+
+      <ul class="highlight-grid">
+        <li class="highlight-card">
+          <h3>검증부터 시작합니다</h3>
+          <p>분석 전에 결측치·이상치·중복을 먼저 점검합니다. 잘못된 데이터 위에 쌓은 결론은 의미가 없기 때문입니다.</p>
+        </li>
+        <li class="highlight-card">
+          <h3>실제 데이터를 다룹니다</h3>
+          <p>공공데이터, 매출·소비 데이터 등 현실의 지저분한 데이터를 정제하고 분석한 경험이 있습니다.</p>
+        </li>
+        <li class="highlight-card">
+          <h3>전달까지 책임집니다</h3>
+          <p>분석 결과를 이해하기 쉬운 시각화와 서비스로 구현해, 실제 의사결정에 쓰이도록 만듭니다.</p>
+        </li>
+      </ul>
     </section>
 
     <!-- ===== Skills ===== -->
     <section id="skills" class="fade-in">
+      <p class="section-eyebrow">02 — Skills</p>
       <h2>Skills</h2>
-      <ul class="skills-list">
-        <li>HTML5</li>
-        <li>CSS3</li>
-        <li>JavaScript (ES6+)</li>
-        <li>Flexbox / Grid</li>
-        <li>반응형 웹</li>
-        <li>Fetch API</li>
-        <li>Git / GitHub</li>
-      </ul>
+      <p class="section-desc">분석 과정에서 사용하는 도구들</p>
+
+      <div class="skills-grid">
+        <div class="skill-group">
+          <h3>언어 &amp; 쿼리</h3>
+          <ul class="skills-list">
+            <li>Python</li>
+            <li>SQL</li>
+            <li>R</li>
+          </ul>
+        </div>
+
+        <div class="skill-group">
+          <h3>분석 &amp; 전처리</h3>
+          <ul class="skills-list">
+            <li>Pandas</li>
+            <li>NumPy</li>
+            <li>통계 분석</li>
+            <li>데이터 정제</li>
+          </ul>
+        </div>
+
+        <div class="skill-group">
+          <h3>시각화 &amp; 전달</h3>
+          <ul class="skills-list">
+            <li>Matplotlib</li>
+            <li>Seaborn</li>
+            <li>Tableau</li>
+            <li>Excel</li>
+          </ul>
+        </div>
+
+        <div class="skill-group">
+          <h3>협업 &amp; 환경</h3>
+          <ul class="skills-list">
+            <li>Git / GitHub</li>
+            <li>Jupyter</li>
+            <li>Docker</li>
+          </ul>
+        </div>
+      </div>
     </section>
 
     <!-- ===== Projects (GitHub API로 채움) ===== -->
     <section id="projects" class="fade-in">
+      <p class="section-eyebrow">03 — Projects</p>
       <h2>Projects</h2>
-      <p class="section-desc">GitHub에 공개된 저장소를 최근 업데이트 순으로 불러옵니다.</p>
+      <p class="section-desc">GitHub에 공개된 저장소를 최근 업데이트 순으로 불러옵니다</p>
+
       <div id="projects-container" aria-live="polite">
         <div class="status-message">
           <div class="spinner"></div>
@@ -99,28 +196,30 @@
 
     <!-- ===== Contact ===== -->
     <section id="contact" class="fade-in">
+      <p class="section-eyebrow">04 — Contact</p>
       <h2>Contact</h2>
-      <p class="section-desc">궁금한 점이 있다면 편하게 남겨주세요.</p>
+      <p class="section-desc">함께 풀어보고 싶은 데이터가 있다면 편하게 남겨주세요</p>
+
       <form id="contact-form" novalidate>
         <div class="form-group">
           <label for="name">이름</label>
-          <input type="text" id="name" name="name" autocomplete="name" required>
+          <input type="text" id="name" name="name" autocomplete="name" placeholder="성함을 입력해주세요" required>
           <span class="error-msg" id="name-error"></span>
         </div>
 
         <div class="form-group">
           <label for="email">이메일</label>
-          <input type="email" id="email" name="email" autocomplete="email" required>
+          <input type="email" id="email" name="email" autocomplete="email" placeholder="답장 받으실 주소" required>
           <span class="error-msg" id="email-error"></span>
         </div>
 
         <div class="form-group">
           <label for="message">메시지</label>
-          <textarea id="message" name="message" rows="5" required></textarea>
+          <textarea id="message" name="message" rows="5" placeholder="어떤 이야기든 좋습니다" required></textarea>
           <span class="error-msg" id="message-error"></span>
         </div>
 
-        <button type="submit" class="btn btn-primary">보내기</button>
+        <button type="submit" class="btn btn-primary btn-block">보내기</button>
         <p class="success-msg" id="form-success" role="status" hidden>메시지가 전송되었습니다!</p>
       </form>
     </section>
@@ -128,11 +227,13 @@
 
   <!-- ===== Footer ===== -->
   <footer>
-    <p>&copy; 2026 강서연. All rights reserved.</p>
+    <p class="footer-name">강서연</p>
+    <p>데이터를 검증하고, 답으로 바꿉니다.</p>
     <div class="social-links">
       <a href="https://github.com/5312ksy-beep" target="_blank" rel="noopener">GitHub</a>
       <a href="mailto:5312ksy@gmail.com">Email</a>
     </div>
+    <p class="copyright">&copy; 2026 강서연. All rights reserved.</p>
   </footer>
 
   <button class="scroll-top" type="button" aria-label="맨 위로">↑</button>
